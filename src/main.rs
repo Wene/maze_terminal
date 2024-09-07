@@ -36,14 +36,11 @@ macro_rules! println {
     };
 }
 
-
 fn put_console(console: Console) {
     interrupt::free(|cs| {
         *CONSOLE.borrow(cs).borrow_mut() = Some(console);
     })
 }
-
-
 
 #[arduino_hal::entry]
 fn main() -> ! {
@@ -52,18 +49,16 @@ fn main() -> ! {
     let serial = arduino_hal::default_serial!(dp, pins, 57600);
     put_console(serial);
 
-    
     println!("Hello serial console!");
- 
-    
+
     let mut led = pins.d13.into_output();
 
     let mut count = 0;
-    
+
     loop {
         led.toggle();
         arduino_hal::delay_ms(500);
-        
+
         println!("loop {}", count);
         count += 1;
     }
