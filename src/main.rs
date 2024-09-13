@@ -67,32 +67,32 @@ fn main() -> ! {
     let (spi, _) = spi::Spi::new(dp.SPI, sck, mosi, miso, cs, settings);
 
 
-    let mut output_buffer = [0; 20 + (3 * 12)];
-    let mut data: [RGB8; 3] = [RGB8::default(); 3];
-    let empty: [RGB8; 3] = [RGB8::default(); 3];
+    const NUM_LEDS: usize = 6;
+    let mut output_buffer = [0; 20 + (NUM_LEDS * 12)];
+    let mut data: [RGB8; NUM_LEDS] = [RGB8::default(); NUM_LEDS];
+    // let empty: [RGB8; 3] = [RGB8::default(); 3];
     let mut ws = Ws2812::new(spi, &mut output_buffer);
+
+    const BRIGHTNESS: u8 = 50;
+    let red = RGB8 {r: BRIGHTNESS, g: 0, b: 0};
+    let green = RGB8 {r: 0, g: BRIGHTNESS, b: 0};
+    let blue = RGB8 {r: 0, g: 0, b: BRIGHTNESS};
+    let colors = [red, green, blue];
 
     println!("Hello serial console!");
 
+    let mut pos: u8 = 0;
+
     loop {
-        data[0] = RGB8 {
-            r: 0,
-            g: 0,
-            b: 0x10,
-        };
-        data[1] = RGB8 {
-            r: 0,
-            g: 0x10,
-            b: 0,
-        };
-        data[2] = RGB8 {
-            r: 0x10,
-            g: 0,
-            b: 0,
-        };
+
+        for i in 0_u8..(NUM_LEDS as u8) {
+            let color_index: u8 = (pos + i) % 3;
+            data[i as usize] = colors[color_index as usize];
+        }
+
+        pos += 1;
+
         ws.write(data.iter().cloned()).unwrap();
-        arduino_hal::delay_ms(1000);
-        ws.write(empty.iter().cloned()).unwrap();
         arduino_hal::delay_ms(1000);
     }
 
