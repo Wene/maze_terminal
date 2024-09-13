@@ -10,7 +10,7 @@ use core::cell::RefCell;
 use arduino_hal::spi;
 use ws2812_spi as ws2812;
 use crate::ws2812::prerendered::Ws2812;
-use smart_leds::{SmartLedsWrite, RGB8};
+use smart_leds::{brightness, colors::{BLUE, CYAN, GREEN, MAGENTA, RED, YELLOW}, SmartLedsWrite, RGB8};
 
 type Console = arduino_hal::hal::usart::Usart0<arduino_hal::DefaultClock>;
 static CONSOLE: interrupt::Mutex<RefCell<Option<Console>>> =
@@ -73,11 +73,7 @@ fn main() -> ! {
     // let empty: [RGB8; 3] = [RGB8::default(); 3];
     let mut ws = Ws2812::new(spi, &mut output_buffer);
 
-    const BRIGHTNESS: u8 = 50;
-    let red = RGB8 {r: BRIGHTNESS, g: 0, b: 0};
-    let green = RGB8 {r: 0, g: BRIGHTNESS, b: 0};
-    let blue = RGB8 {r: 0, g: 0, b: BRIGHTNESS};
-    let colors = [red, green, blue];
+    let colors = [RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA];
 
     println!("Hello serial console!");
 
@@ -86,46 +82,18 @@ fn main() -> ! {
     loop {
 
         for i in 0_u8..(NUM_LEDS as u8) {
-            let color_index: u8 = (pos + i) % 3;
-            data[i as usize] = colors[color_index as usize];
+            let color_index = (pos + i) as usize % colors.len();
+            data[i as usize] = colors[color_index];
         }
 
         pos += 1;
+        if pos >= NUM_LEDS as u8 {
+            pos = 0;
+        }
+        println!("{:?}", pos);
 
-        ws.write(data.iter().cloned()).unwrap();
+        ws.write(brightness(data.iter().cloned(), 50)).unwrap();
         arduino_hal::delay_ms(1000);
     }
-
-    /*
-    let dp: arduino_hal::Peripherals = arduino_hal::Peripherals::take().unwrap();
-    let pins = arduino_hal::pins!(dp);
-    let serial = arduino_hal::default_serial!(dp, pins, 57600);
-    put_console(serial);
-
-    let (spi, _) = spi::Spi::new(
-        dp.SPI,
-        pins.sck.into_output(&mut pins.ddr),
-        pins.mosi.into_output(&mut pins.ddr),
-        pins.miso.into_pull_up_input(&mut pins.ddr),
-        spi::Settings {clock: spi::SerialClockRate::OscfOver8, ..Default::default() },
-    );
-
-
-
-    println!("Hello serial console!");
-
-    let mut led = pins.d13.into_output();
-
-    let mut count = 0;
-
-    loop {
-        led.toggle();
-        arduino_hal::delay_ms(500);
-
-        println!("loop {}", count);
-        count += 1;
-    }
-
-    */
-
+  
 }
