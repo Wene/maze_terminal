@@ -87,8 +87,8 @@ fn main() -> ! {
         }
         println!("{:?}", pos);
 
-        ws.write(brightness(data.iter().cloned(), 50)).unwrap();
-        arduino_hal::delay_ms(1000);
+        ws.write(brightness(data.iter().cloned(), 25)).unwrap();
+        arduino_hal::delay_ms(500);
     }
   
 }
