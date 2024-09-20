@@ -6,10 +6,9 @@ use panic_halt as _;
 use avr_device::interrupt;
 use core::cell::RefCell;
 
-// use arduino_hal::prelude::*;
 use arduino_hal::spi;
 use ws2812_spi as ws2812;
-use crate::ws2812::prerendered::Ws2812;
+use crate::ws2812::Ws2812;
 use smart_leds::{brightness, colors::{BLUE, CYAN, GREEN, MAGENTA, RED, YELLOW}, SmartLedsWrite, RGB8};
 
 type Console = arduino_hal::hal::usart::Usart0<arduino_hal::DefaultClock>;
@@ -58,20 +57,16 @@ fn main() -> ! {
     let serial = arduino_hal::default_serial!(dp, pins, 57600);
     put_console(serial);
 
-
     let  sck = pins.d13.into_output();
     let  mosi = pins.d11.into_output();
     let  miso = pins.d12.into_pull_up_input();
     let  cs = pins.d10.into_output();
-    let settings = spi::Settings {clock: spi::SerialClockRate::OscfOver8, ..Default::default()};
+    let settings = spi::Settings::default();
     let (spi, _) = spi::Spi::new(dp.SPI, sck, mosi, miso, cs, settings);
 
-
-    const NUM_LEDS: usize = 6;
-    let mut output_buffer = [0; 20 + (NUM_LEDS * 12)];
+    const NUM_LEDS: usize = 87;
     let mut data: [RGB8; NUM_LEDS] = [RGB8::default(); NUM_LEDS];
-    // let empty: [RGB8; 3] = [RGB8::default(); 3];
-    let mut ws = Ws2812::new(spi, &mut output_buffer);
+    let mut ws = Ws2812::new(spi);
 
     let colors = [RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA];
 
