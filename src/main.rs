@@ -66,6 +66,11 @@ fn main() -> ! {
     let settings = spi::Settings::default();
     let (spi, _) = spi::Spi::new(dp.SPI, sck, mosi, miso, cs, settings);
 
+    let north = pins.d6.into_pull_up_input();
+    let east = pins.d7.into_pull_up_input();
+    let south = pins.d8.into_pull_up_input();
+    let west = pins.d9.into_pull_up_input();
+
     const NUM_LEDS: usize = 87;
     let mut data: [RGB8; NUM_LEDS] = [RGB8::default(); NUM_LEDS];
     let mut ws = Ws2812::new(spi);
@@ -87,6 +92,30 @@ fn main() -> ! {
             pos = 0;
         }
         println!("{:?}", pos);
+
+        if north.is_low() {
+            for i in 0..23 {
+                data[i] = RGB8::default();
+            }
+        }
+
+        if east.is_low() {
+            for i in 23..46 {
+                data[i] = RGB8::default();
+            }
+        }
+
+        if south.is_low() {
+            for i in 46..69 {
+                data[i] = RGB8::default();
+            }
+        }
+
+        if west.is_low() {
+            for i in 69..87 {
+                data[i] = RGB8::default();
+            }
+        }
 
         ws.write(brightness(data.iter().cloned(), 25)).unwrap();
         arduino_hal::delay_ms(500);
