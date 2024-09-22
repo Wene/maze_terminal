@@ -7,7 +7,7 @@ use avr_device::interrupt;
 use core::cell::RefCell;
 
 use crate::ws2812::Ws2812;
-use arduino_hal::spi;
+use arduino_hal::{spi, port::Pin, port::mode::{Input, PullUp}};
 use smart_leds::{
     brightness,
     colors::{BLUE, CYAN, GREEN, MAGENTA, RED, YELLOW},
@@ -66,10 +66,10 @@ fn main() -> ! {
     let settings = spi::Settings::default();
     let (spi, _) = spi::Spi::new(dp.SPI, sck, mosi, miso, cs, settings);
 
-    let north = pins.d6.into_pull_up_input();
-    let east = pins.d7.into_pull_up_input();
-    let south = pins.d8.into_pull_up_input();
-    let west = pins.d9.into_pull_up_input();
+    let north = pins.d6.into_pull_up_input().downgrade();
+    let east = pins.d7.into_pull_up_input().downgrade();
+    let south = pins.d8.into_pull_up_input().downgrade();
+    let west = pins.d9.into_pull_up_input().downgrade();
 
     const NUM_LEDS: usize = 87;
     let mut data: [RGB8; NUM_LEDS] = [RGB8::default(); NUM_LEDS];
@@ -93,31 +93,20 @@ fn main() -> ! {
         }
         println!("{:?}", pos);
 
-        if north.is_low() {
-            for i in 0..23 {
-                data[i] = RGB8::default();
-            }
-        }
-
-        if east.is_low() {
-            for i in 23..46 {
-                data[i] = RGB8::default();
-            }
-        }
-
-        if south.is_low() {
-            for i in 46..69 {
-                data[i] = RGB8::default();
-            }
-        }
-
-        if west.is_low() {
-            for i in 69..87 {
-                data[i] = RGB8::default();
-            }
-        }
+        off_if_low(&north, &mut data, 0, 23);
+        off_if_low(&east, &mut data, 23, 46);
+        off_if_low(&south, &mut data, 46, 69);
+        off_if_low(&west, &mut data, 69, 87);
 
         ws.write(brightness(data.iter().cloned(), 25)).unwrap();
         arduino_hal::delay_ms(500);
+    }
+}
+
+fn off_if_low(button: &Pin<Input<PullUp>>, leds: &mut [RGB8], from: usize, to: usize) {
+    if button.is_low() {
+        for i in from..to {
+            leds[i] = RGB8::default();
+        }
     }
 }
