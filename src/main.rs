@@ -72,16 +72,10 @@ fn main() -> ! {
     let settings = spi::Settings::default();
     let (spi, _) = spi::Spi::new(dp.SPI, sck, mosi, miso, cs, settings);
 
-
-    // let mut led_n = pins.d7.into_output().downgrade(); -> 5
-    // let mut led_w = pins.d6.into_output().downgrade(); -> 4
-    // let mut led_e = pins.d9.into_output().downgrade(); -> 2
-    // let mut led_s = pins.d8.into_output().downgrade(); -> 3
-
-    let north = pins.d5.into_floating_input().downgrade();
-    let east = pins.d4.into_floating_input().downgrade();
-    let south = pins.d2.into_floating_input().downgrade();
-    let west = pins.d3.into_floating_input().downgrade();
+    let north = pins.d4.into_floating_input().downgrade();
+    let east = pins.d2.into_floating_input().downgrade();
+    let south = pins.d3.into_floating_input().downgrade();
+    let west = pins.d5.into_floating_input().downgrade();
 
     let mut ws = Ws2812::new(spi);
 
