@@ -7,10 +7,10 @@ use avr_device::interrupt;
 use core::cell::RefCell;
 
 use crate::ws2812::Ws2812;
-use arduino_hal::{spi, port::Pin, port::mode::{Input, PullUp}};
+use arduino_hal::spi;
 use smart_leds::{
     brightness,
-    colors::{BLUE, CYAN, GREEN, MAGENTA, RED, YELLOW},
+    colors::GREEN,
     SmartLedsWrite, RGB8,
 };
 use ws2812_spi as ws2812;
@@ -51,6 +51,12 @@ fn put_console(console: Console) {
     })
 }
 
+const NUM_LEDS: usize = 87;
+const PIXEL_N: (usize, usize) = (0, 18);
+const PIXEL_W: (usize, usize) = (23, 41);
+const PIXEL_S: (usize, usize) = (46, 64);
+const PIXEL_E: (usize, usize) = (69, 87);
+
 #[arduino_hal::entry]
 fn main() -> ! {
     let dp = arduino_hal::Peripherals::take().unwrap();
@@ -66,47 +72,46 @@ fn main() -> ! {
     let settings = spi::Settings::default();
     let (spi, _) = spi::Spi::new(dp.SPI, sck, mosi, miso, cs, settings);
 
-    let north = pins.d6.into_pull_up_input().downgrade();
-    let east = pins.d7.into_pull_up_input().downgrade();
-    let south = pins.d8.into_pull_up_input().downgrade();
-    let west = pins.d9.into_pull_up_input().downgrade();
 
-    const NUM_LEDS: usize = 87;
-    let mut data: [RGB8; NUM_LEDS] = [RGB8::default(); NUM_LEDS];
+    // let mut led_n = pins.d7.into_output().downgrade(); -> 5
+    // let mut led_w = pins.d6.into_output().downgrade(); -> 4
+    // let mut led_e = pins.d9.into_output().downgrade(); -> 2
+    // let mut led_s = pins.d8.into_output().downgrade(); -> 3
+
+    let north = pins.d5.into_floating_input().downgrade();
+    let east = pins.d4.into_floating_input().downgrade();
+    let south = pins.d2.into_floating_input().downgrade();
+    let west = pins.d3.into_floating_input().downgrade();
+
     let mut ws = Ws2812::new(spi);
-
-    let colors = [RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA];
 
     println!("Hello serial console!");
 
-    let mut pos: u8 = 0;
-
     loop {
-        for i in 0_u8..(NUM_LEDS as u8) {
-            let color_index = (pos + i) as usize % colors.len();
-            data[i as usize] = colors[color_index];
-        }
+        let mut data: [RGB8; NUM_LEDS] = [RGB8::default(); NUM_LEDS];
 
-        pos += 1;
-        if pos >= NUM_LEDS as u8 {
-            pos = 0;
+        if north.is_high() {
+            for i in PIXEL_N.0..PIXEL_N.1 {
+                data[i] = GREEN;
+            }
         }
-        println!("{:?}", pos);
-
-        off_if_low(&north, &mut data, 0, 23);
-        off_if_low(&east, &mut data, 23, 46);
-        off_if_low(&south, &mut data, 46, 69);
-        off_if_low(&west, &mut data, 69, 87);
+        if east.is_high() {
+            for i in PIXEL_E.0..PIXEL_E.1 {
+                data[i] = GREEN;
+            }
+        }
+        if south.is_high() {
+            for i in PIXEL_S.0..PIXEL_S.1 {
+                data[i] = GREEN;
+            }
+        }
+        if west.is_high() {
+            for i in PIXEL_W.0..PIXEL_W.1 {
+                data[i] = GREEN;
+            }
+        }
 
         ws.write(brightness(data.iter().cloned(), 25)).unwrap();
-        arduino_hal::delay_ms(500);
-    }
-}
-
-fn off_if_low(button: &Pin<Input<PullUp>>, leds: &mut [RGB8], from: usize, to: usize) {
-    if button.is_low() {
-        for i in from..to {
-            leds[i] = RGB8::default();
-        }
+        arduino_hal::delay_ms(50);
     }
 }
