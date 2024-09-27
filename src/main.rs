@@ -9,8 +9,7 @@ use core::cell::RefCell;
 use crate::ws2812::Ws2812;
 use arduino_hal::{port::mode::{Input, PullUp, Output}, spi, port::Pin};
 use smart_leds::{
-    brightness,
-    SmartLedsWrite, RGB8,
+    brightness, colors::BLUE, SmartLedsWrite, RGB8
 };
 use ws2812_spi as ws2812;
 
@@ -103,7 +102,19 @@ fn main() -> ! {
 
     println!("Greetings from the MazeTerminal");
 
+    if btn.north.is_low() || btn.east.is_low() || btn.south.is_low() || btn.west.is_low() {
+        loop {
+            let mut data: [RGB8; NUM_LEDS] = [BLUE; NUM_LEDS];
     
+            dark_pixel_if_low(&mut data, &btn.north, PIXEL_N);
+            dark_pixel_if_low(&mut data, &btn.east, PIXEL_E);
+            dark_pixel_if_low(&mut data, &btn.south, PIXEL_S);
+            dark_pixel_if_low(&mut data, &btn.west, PIXEL_W);
+
+            ws.write(brightness(data.iter().cloned(), 25)).unwrap();
+            arduino_hal::delay_ms(10);
+        }
+    }
 
     let mut pos = 0;
     loop {
