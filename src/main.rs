@@ -7,7 +7,7 @@ use avr_device::interrupt;
 use core::cell::RefCell;
 
 use crate::ws2812::Ws2812;
-use arduino_hal::spi;
+use arduino_hal::{port::mode::{Input, PullUp, Output}, spi, port::Pin};
 use smart_leds::{
     brightness,
     colors::GREEN,
@@ -72,10 +72,24 @@ fn main() -> ! {
     let settings = spi::Settings::default();
     let (spi, _) = spi::Spi::new(dp.SPI, sck, mosi, miso, cs, settings);
 
-    let north = pins.d4.into_pull_up_input().downgrade();
-    let east = pins.d2.into_pull_up_input().downgrade();
-    let south = pins.d3.into_pull_up_input().downgrade();
-    let west = pins.d5.into_pull_up_input().downgrade();
+    let in_north = pins.d4.into_pull_up_input().downgrade();
+    let in_east = pins.d2.into_pull_up_input().downgrade();
+    let in_south = pins.d3.into_pull_up_input().downgrade();
+    let in_west = pins.d5.into_pull_up_input().downgrade();
+
+    let mut out_north = pins.d9.into_output().downgrade();
+    out_north.set_high();
+    let mut out_east = pins.d7.into_output().downgrade();
+    out_east.set_high();
+    let mut out_south = pins.d6.into_output().downgrade();
+    out_south.set_high();
+    let mut out_west = pins.d8.into_output().downgrade();
+    out_west.set_high();
+
+    let btn_north = pins.a1.into_pull_up_input().downgrade();
+    let btn_east = pins.a2.into_pull_up_input().downgrade();
+    let btn_south = pins.a3.into_pull_up_input().downgrade();
+    let btn_west = pins.a4.into_pull_up_input().downgrade();
 
     let mut ws = Ws2812::new(spi);
 
@@ -84,28 +98,34 @@ fn main() -> ! {
     loop {
         let mut data: [RGB8; NUM_LEDS] = [RGB8::default(); NUM_LEDS];
 
-        if north.is_high() {
-            for i in PIXEL_N.0..PIXEL_N.1 {
-                data[i] = GREEN;
-            }
-        }
-        if east.is_high() {
-            for i in PIXEL_E.0..PIXEL_E.1 {
-                data[i] = GREEN;
-            }
-        }
-        if south.is_high() {
-            for i in PIXEL_S.0..PIXEL_S.1 {
-                data[i] = GREEN;
-            }
-        }
-        if west.is_high() {
-            for i in PIXEL_W.0..PIXEL_W.1 {
-                data[i] = GREEN;
-            }
-        }
+        light_pixel_if_high(&mut data, &in_north, PIXEL_N);
+        light_pixel_if_high(&mut data, &in_east, PIXEL_E);
+        light_pixel_if_high(&mut data, &in_south, PIXEL_S);
+        light_pixel_if_high(&mut data, &in_west, PIXEL_W);
+
+        forward_btn_to_out(&btn_north, &mut out_north);
+        forward_btn_to_out(&btn_east, &mut out_east);
+        forward_btn_to_out(&btn_south, &mut out_south);
+        forward_btn_to_out(&btn_west, &mut out_west);
 
         ws.write(brightness(data.iter().cloned(), 25)).unwrap();
         arduino_hal::delay_ms(10);
+    }
+}
+
+fn forward_btn_to_out(btn: &Pin<Input<PullUp>>, out: &mut Pin<Output>) {
+    if btn.is_low() {
+        out.set_low();
+    }
+    else {
+        out.set_high();
+    }
+}
+
+fn light_pixel_if_high(data: &mut [RGB8], input: &Pin<Input<PullUp>>, (from, to): (usize, usize)) {
+    if input.is_high() {
+        for i in from..to {
+            data[i] = GREEN;
+        }
     }
 }
