@@ -1,12 +1,12 @@
 [package]
-name = "blinken_nano"
+name = "maze_terminal"
 version = "0.1.0"
 authors = ["Wene <wene83@gmx.ch>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
 [[bin]]
-name = "blinken_nano"
+name = "maze_terminal"
 test = false
 bench = false
 

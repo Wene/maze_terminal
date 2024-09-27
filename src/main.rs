@@ -93,7 +93,7 @@ fn main() -> ! {
 
     let mut ws = Ws2812::new(spi);
 
-    println!("Greetings from the display unit");
+    println!("Greetings from the MazeTerminal");
 
     loop {
         let mut data: [RGB8; NUM_LEDS] = [RGB8::default(); NUM_LEDS];

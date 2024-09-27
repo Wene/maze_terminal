@@ -73,19 +73,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8fe8f5a8a398345e52358e18ff07cc17a568fbca5c6f73873d3a62056309603"
 
 [[package]]
-name = "blinken_nano"
-version = "0.1.0"
-dependencies = [
- "arduino-hal",
- "avr-device",
- "panic-halt",
- "proc-macro2",
- "smart-leds",
- "ufmt",
- "ws2812-spi",
-]
-
-[[package]]
 name = "bytemuck"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -140,6 +127,19 @@ name = "embedded-storage"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "723dce4e9f25b6e6c5f35628e144794e5b459216ed7da97b7c4b66cdb3fa82ca"
+
+[[package]]
+name = "maze_terminal"
+version = "0.1.0"
+dependencies = [
+ "arduino-hal",
+ "avr-device",
+ "panic-halt",
+ "proc-macro2",
+ "smart-leds",
+ "ufmt",
+ "ws2812-spi",
+]
 
 [[package]]
 name = "nb"
