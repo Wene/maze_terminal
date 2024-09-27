@@ -72,14 +72,14 @@ fn main() -> ! {
     let settings = spi::Settings::default();
     let (spi, _) = spi::Spi::new(dp.SPI, sck, mosi, miso, cs, settings);
 
-    let north = pins.d4.into_floating_input().downgrade();
-    let east = pins.d2.into_floating_input().downgrade();
-    let south = pins.d3.into_floating_input().downgrade();
-    let west = pins.d5.into_floating_input().downgrade();
+    let north = pins.d4.into_pull_up_input().downgrade();
+    let east = pins.d2.into_pull_up_input().downgrade();
+    let south = pins.d3.into_pull_up_input().downgrade();
+    let west = pins.d5.into_pull_up_input().downgrade();
 
     let mut ws = Ws2812::new(spi);
 
-    println!("Hello serial console!");
+    println!("Greetings from the display unit");
 
     loop {
         let mut data: [RGB8; NUM_LEDS] = [RGB8::default(); NUM_LEDS];
@@ -106,6 +106,6 @@ fn main() -> ! {
         }
 
         ws.write(brightness(data.iter().cloned(), 25)).unwrap();
-        arduino_hal::delay_ms(50);
+        arduino_hal::delay_ms(10);
     }
 }
