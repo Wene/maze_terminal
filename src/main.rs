@@ -10,7 +10,6 @@ use crate::ws2812::Ws2812;
 use arduino_hal::{port::mode::{Input, PullUp, Output}, spi, port::Pin};
 use smart_leds::{
     brightness,
-    colors::GREEN,
     SmartLedsWrite, RGB8,
 };
 use ws2812_spi as ws2812;
@@ -95,13 +94,43 @@ fn main() -> ! {
 
     println!("Greetings from the MazeTerminal");
 
+    let mut pos = 0;
     loop {
         let mut data: [RGB8; NUM_LEDS] = [RGB8::default(); NUM_LEDS];
 
-        light_pixel_if_high(&mut data, &in_north, PIXEL_N);
-        light_pixel_if_high(&mut data, &in_east, PIXEL_E);
-        light_pixel_if_high(&mut data, &in_south, PIXEL_S);
-        light_pixel_if_high(&mut data, &in_west, PIXEL_W);
+        const STEP: u8 = 255_u8 / NUM_LEDS as u8 * 6_u8;
+        const SEGMENT: u8 = NUM_LEDS as u8 / 6;
+
+        let mut led_index = pos;
+
+        for i in 0..SEGMENT {
+            data[advance_led_index(&mut led_index)] = RGB8 {r: 255, g: i * STEP, b: 0};
+        }
+        for i in 0..SEGMENT {
+            data[advance_led_index(&mut led_index)] = RGB8 {r: 255 - i * STEP, g: 255, b: 0};
+        }
+        for i in 0..SEGMENT {
+            data[advance_led_index(&mut led_index)] = RGB8 {r: 0, g: 255, b: i * STEP};
+        }
+        for i in 0..SEGMENT {
+            data[advance_led_index(&mut led_index)] = RGB8 {r: 0, g: 255 - i * STEP, b: 255};
+        }
+        for i in 0..SEGMENT {
+            data[advance_led_index(&mut led_index)] = RGB8 {r: i * STEP, g: 0, b: 255};
+        }
+        for i in 0..SEGMENT + (NUM_LEDS as u8 % 6) {
+            data[advance_led_index(&mut led_index)] = RGB8 {r: 255, g: 0, b: 255 - i * STEP};
+        }
+
+        pos += 1;
+        if NUM_LEDS <= pos {
+            pos = 0;
+        }
+
+        dark_pixel_if_low(&mut data, &in_north, PIXEL_N);
+        dark_pixel_if_low(&mut data, &in_east, PIXEL_E);
+        dark_pixel_if_low(&mut data, &in_south, PIXEL_S);
+        dark_pixel_if_low(&mut data, &in_west, PIXEL_W);
 
         forward_btn_to_out(&btn_north, &mut out_north);
         forward_btn_to_out(&btn_east, &mut out_east);
@@ -113,6 +142,15 @@ fn main() -> ! {
     }
 }
 
+fn advance_led_index(index: &mut usize) -> usize {
+    *index += 1;
+    if NUM_LEDS <= *index {
+        *index = 0;
+    }
+
+    *index
+}
+
 fn forward_btn_to_out(btn: &Pin<Input<PullUp>>, out: &mut Pin<Output>) {
     if btn.is_low() {
         out.set_low();
@@ -122,10 +160,10 @@ fn forward_btn_to_out(btn: &Pin<Input<PullUp>>, out: &mut Pin<Output>) {
     }
 }
 
-fn light_pixel_if_high(data: &mut [RGB8], input: &Pin<Input<PullUp>>, (from, to): (usize, usize)) {
-    if input.is_high() {
+fn dark_pixel_if_low(data: &mut [RGB8], input: &Pin<Input<PullUp>>, (from, to): (usize, usize)) {
+    if input.is_low() {
         for i in from..to {
-            data[i] = GREEN;
+            data[i] = RGB8::default();
         }
     }
 }
