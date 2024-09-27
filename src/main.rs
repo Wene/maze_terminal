@@ -56,6 +56,13 @@ const PIXEL_W: (usize, usize) = (23, 41);
 const PIXEL_S: (usize, usize) = (46, 64);
 const PIXEL_E: (usize, usize) = (69, 87);
 
+struct Btn {
+    north: Pin<Input<PullUp>>,
+    east: Pin<Input<PullUp>>,
+    south: Pin<Input<PullUp>>,
+    west: Pin<Input<PullUp>>,
+}
+
 #[arduino_hal::entry]
 fn main() -> ! {
     let dp = arduino_hal::Peripherals::take().unwrap();
@@ -85,14 +92,18 @@ fn main() -> ! {
     let mut out_west = pins.d8.into_output().downgrade();
     out_west.set_high();
 
-    let btn_north = pins.a1.into_pull_up_input().downgrade();
-    let btn_east = pins.a2.into_pull_up_input().downgrade();
-    let btn_south = pins.a3.into_pull_up_input().downgrade();
-    let btn_west = pins.a4.into_pull_up_input().downgrade();
+    let btn = Btn {
+        north: pins.a1.into_pull_up_input().downgrade(),
+        east: pins.a2.into_pull_up_input().downgrade(),
+        south: pins.a3.into_pull_up_input().downgrade(),
+        west: pins.a4.into_pull_up_input().downgrade(),
+    };
 
     let mut ws = Ws2812::new(spi);
 
     println!("Greetings from the MazeTerminal");
+
+    
 
     let mut pos = 0;
     loop {
@@ -132,10 +143,10 @@ fn main() -> ! {
         dark_pixel_if_low(&mut data, &in_south, PIXEL_S);
         dark_pixel_if_low(&mut data, &in_west, PIXEL_W);
 
-        forward_btn_to_out(&btn_north, &mut out_north);
-        forward_btn_to_out(&btn_east, &mut out_east);
-        forward_btn_to_out(&btn_south, &mut out_south);
-        forward_btn_to_out(&btn_west, &mut out_west);
+        forward_btn_to_out(&btn.north, &mut out_north);
+        forward_btn_to_out(&btn.east, &mut out_east);
+        forward_btn_to_out(&btn.south, &mut out_south);
+        forward_btn_to_out(&btn.west, &mut out_west);
 
         ws.write(brightness(data.iter().cloned(), 25)).unwrap();
         arduino_hal::delay_ms(10);
