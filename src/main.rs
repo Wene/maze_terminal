@@ -7,10 +7,12 @@ use avr_device::interrupt;
 use core::cell::RefCell;
 
 use crate::ws2812::Ws2812;
-use arduino_hal::{port::mode::{Input, PullUp, Output}, spi, port::Pin};
-use smart_leds::{
-    brightness, colors::BLUE, SmartLedsWrite, RGB8
+use arduino_hal::{
+    port::mode::{Input, Output, PullUp},
+    port::Pin,
+    spi,
 };
+use smart_leds::{brightness, colors::BLUE, SmartLedsWrite, RGB8};
 use ws2812_spi as ws2812;
 
 type Console = arduino_hal::hal::usart::Usart0<arduino_hal::DefaultClock>;
@@ -105,7 +107,7 @@ fn main() -> ! {
     if btn.north.is_low() || btn.east.is_low() || btn.south.is_low() || btn.west.is_low() {
         loop {
             let mut data: [RGB8; NUM_LEDS] = [BLUE; NUM_LEDS];
-    
+
             dark_pixel_if_low(&mut data, &btn.north, PIXEL_N);
             dark_pixel_if_low(&mut data, &btn.east, PIXEL_E);
             dark_pixel_if_low(&mut data, &btn.south, PIXEL_S);
@@ -126,22 +128,46 @@ fn main() -> ! {
         let mut led_index = pos;
 
         for i in 0..SEGMENT {
-            data[advance_led_index(&mut led_index)] = RGB8 {r: 255, g: i * STEP, b: 0};
+            data[advance_led_index(&mut led_index)] = RGB8 {
+                r: 255,
+                g: i * STEP,
+                b: 0,
+            };
         }
         for i in 0..SEGMENT {
-            data[advance_led_index(&mut led_index)] = RGB8 {r: 255 - i * STEP, g: 255, b: 0};
+            data[advance_led_index(&mut led_index)] = RGB8 {
+                r: 255 - i * STEP,
+                g: 255,
+                b: 0,
+            };
         }
         for i in 0..SEGMENT {
-            data[advance_led_index(&mut led_index)] = RGB8 {r: 0, g: 255, b: i * STEP};
+            data[advance_led_index(&mut led_index)] = RGB8 {
+                r: 0,
+                g: 255,
+                b: i * STEP,
+            };
         }
         for i in 0..SEGMENT {
-            data[advance_led_index(&mut led_index)] = RGB8 {r: 0, g: 255 - i * STEP, b: 255};
+            data[advance_led_index(&mut led_index)] = RGB8 {
+                r: 0,
+                g: 255 - i * STEP,
+                b: 255,
+            };
         }
         for i in 0..SEGMENT {
-            data[advance_led_index(&mut led_index)] = RGB8 {r: i * STEP, g: 0, b: 255};
+            data[advance_led_index(&mut led_index)] = RGB8 {
+                r: i * STEP,
+                g: 0,
+                b: 255,
+            };
         }
         for i in 0..SEGMENT + (NUM_LEDS as u8 % 6) {
-            data[advance_led_index(&mut led_index)] = RGB8 {r: 255, g: 0, b: 255 - i * STEP};
+            data[advance_led_index(&mut led_index)] = RGB8 {
+                r: 255,
+                g: 0,
+                b: 255 - i * STEP,
+            };
         }
 
         pos += 1;
@@ -176,8 +202,7 @@ fn advance_led_index(index: &mut usize) -> usize {
 fn forward_btn_to_out(btn: &Pin<Input<PullUp>>, out: &mut Pin<Output>) {
     if btn.is_low() {
         out.set_low();
-    }
-    else {
+    } else {
         out.set_high();
     }
 }
